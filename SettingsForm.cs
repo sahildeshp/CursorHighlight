@@ -178,6 +178,13 @@ public class SettingsForm : Form
         };
     }
 
+    // Called by TrayApplicationContext when the tray toggle is used
+    public void SyncEnabled(bool enabled)
+    {
+        if (_enableCheck.Checked != enabled)
+            _enableCheck.Checked = enabled; // triggers CheckedChanged → FireChanged, which is fine
+    }
+
     private void PickColor(object? sender, EventArgs e)
     {
         using var dlg = new ColorDialog { Color = _selectedColor, FullOpen = true };

@@ -8,6 +8,7 @@ public class TrayApplicationContext : ApplicationContext
     private readonly NotifyIcon _trayIcon;
     private readonly OverlayForm _overlay;
     private readonly System.Windows.Forms.Timer _timer;
+    private readonly ToolStripMenuItem _toggleItem;
     private SettingsForm? _settingsForm;
 
     public TrayApplicationContext()
@@ -17,28 +18,29 @@ public class TrayApplicationContext : ApplicationContext
         _overlay = new OverlayForm(settings);
         _overlay.Show();
 
+        _toggleItem = new ToolStripMenuItem();
+        _toggleItem.Click += ToggleHighlight;
+
         var menu = new ContextMenuStrip();
+        menu.Items.Add(_toggleItem);
         menu.Items.Add("Settings", null, OpenSettings);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitApp());
 
         _trayIcon = new NotifyIcon
         {
-            Icon = CreateTrayIcon(),
             ContextMenuStrip = menu,
             Visible = true,
             Text = "CursorHighlight"
         };
         _trayIcon.DoubleClick += OpenSettings;
 
-        _trayIcon.ShowBalloonTip(2000, "CursorHighlight", "Running in system tray", ToolTipIcon.None);
-
         _timer = new System.Windows.Forms.Timer { Interval = 16 };
         _timer.Tick += (_, _) => _overlay.Redraw();
-        if (settings.IsEnabled)
-            _timer.Start();
-        else
-            _overlay.Clear();
+
+        UpdateTrayState(settings.IsEnabled);
+
+        _trayIcon.ShowBalloonTip(2000, "CursorHighlight", "Running in system tray", ToolTipIcon.None);
 
         // First-run: ask whether to start with Windows
         if (!settings.HasAskedStartup)
@@ -54,6 +56,44 @@ public class TrayApplicationContext : ApplicationContext
                 MessageBoxDefaultButton.Button1);
 
             AppSettings.SetStartup(answer == DialogResult.Yes);
+        }
+    }
+
+    private void ToggleHighlight(object? sender, EventArgs e)
+    {
+        var settings = AppSettings.Load();
+        settings.IsEnabled = !settings.IsEnabled;
+        AppSettings.Save(settings);
+        _overlay.ApplySettings(settings);
+        UpdateTrayState(settings.IsEnabled);
+
+        if (settings.IsEnabled)
+            _timer.Start();
+        else
+        {
+            _timer.Stop();
+            _overlay.Clear();
+        }
+
+        // Sync the open settings form if visible
+        if (_settingsForm != null && !_settingsForm.IsDisposed)
+            _settingsForm.SyncEnabled(settings.IsEnabled);
+    }
+
+    private void UpdateTrayState(bool enabled)
+    {
+        _toggleItem.Text = enabled ? "Disable Highlight" : "Enable Highlight";
+
+        var oldIcon = _trayIcon.Icon;
+        _trayIcon.Icon = CreateTrayIcon(enabled);
+        oldIcon?.Dispose();
+
+        if (enabled)
+            _timer.Start();
+        else
+        {
+            _timer.Stop();
+            _overlay.Clear();
         }
     }
 
@@ -76,14 +116,7 @@ public class TrayApplicationContext : ApplicationContext
     {
         AppSettings.Save(settings);
         _overlay.ApplySettings(settings);
-
-        if (settings.IsEnabled)
-            _timer.Start();
-        else
-        {
-            _timer.Stop();
-            _overlay.Clear();
-        }
+        UpdateTrayState(settings.IsEnabled);
     }
 
     private void ExitApp()
@@ -97,18 +130,19 @@ public class TrayApplicationContext : ApplicationContext
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool DestroyIcon(IntPtr hIcon);
 
-    private static Icon CreateTrayIcon()
+    private static Icon CreateTrayIcon(bool enabled)
     {
+        var fillColor = enabled
+            ? Color.FromArgb(255, 255, 255, 0)   // bright yellow
+            : Color.FromArgb(255, 120, 120, 120); // gray
+
         using var bmp = new Bitmap(16, 16);
         using (var g = Graphics.FromImage(bmp))
         {
             g.Clear(Color.Transparent);
-            using var brush = new SolidBrush(Color.FromArgb(255, 255, 255, 0));
+            using var brush = new SolidBrush(fillColor);
             g.FillEllipse(brush, 1, 1, 13, 13);
-            using var pen = new System.Drawing.Pen(Color.FromArgb(180, 200, 200, 0), 1f);
-            g.DrawEllipse(pen, 1, 1, 13, 13);
         }
-        // GetHicon() creates a GDI HICON; copy it into a managed Icon then free the handle
         IntPtr hIcon = bmp.GetHicon();
         var icon = (Icon)Icon.FromHandle(hIcon).Clone();
         DestroyIcon(hIcon);
