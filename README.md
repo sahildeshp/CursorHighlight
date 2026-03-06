@@ -10,7 +10,8 @@ A lightweight open-source Windows utility that draws a semi-transparent circle a
 
 - Coloured highlight circle follows your cursor in real time (~60 fps)
 - Lives in the system tray — no taskbar entry, no distraction
-- Toggle the highlight on/off without quitting
+- **Quick toggle** from the tray right-click menu — enable or disable without opening settings
+- Dynamic tray icon: yellow when active, gray when disabled
 - Configurable size, colour, and opacity with live preview
 - Optional Windows startup launch (asks on first run)
 - Single standalone `.exe` — no installer, no .NET runtime required on target machine
@@ -24,13 +25,16 @@ Grab the latest `CursorHighlight.exe` from the [Releases](../../releases) page a
 1. Run `CursorHighlight.exe`
 2. On first launch you'll be asked whether to start with Windows
 3. A fluorescent yellow circle appears around your cursor immediately
-4. Right-click the tray icon → **Settings** to adjust:
+4. **Right-click the tray icon** for quick actions:
+   - **Enable / Disable Highlight** — instant toggle, no settings needed
+   - **Settings** — open the full settings panel
+   - **Exit** — quit the app
+5. In **Settings** you can adjust:
    - **Highlight enabled** — toggle the circle on/off
    - **Size** — circle diameter (20–200 px)
    - **Color** — click the colour swatch to pick any colour
    - **Opacity** — transparency of the circle (10–90%)
    - **Run at Windows startup** — enable/disable autostart
-5. Right-click tray icon → **Exit** to quit
 
 Settings are saved automatically to `%APPDATA%\CursorHighlight\settings.json`.
 
