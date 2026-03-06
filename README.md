@@ -40,7 +40,7 @@ Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/CursorHighlight.git
+git clone https://github.com/sahildeshp/CursorHighlight.git
 cd CursorHighlight
 
 # Run during development
