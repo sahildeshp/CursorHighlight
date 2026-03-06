@@ -8,14 +8,12 @@ namespace CursorHighlight;
 public class OverlayForm : Form
 {
     // Win32 constants
-    private const int GWL_EXSTYLE      = -20;
     private const int WS_EX_LAYERED    = 0x00080000;
     private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_NOACTIVATE = 0x08000000;
     private const uint ULW_ALPHA       = 0x00000002;
     private const int SWP_NOACTIVATE   = 0x0010;
-    private const int SWP_NOZORDER     = 0x0004;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
 
     [StructLayout(LayoutKind.Sequential)]

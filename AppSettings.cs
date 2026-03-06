@@ -32,11 +32,23 @@ public class AppSettings
             if (File.Exists(SettingsPath))
             {
                 var json = File.ReadAllText(SettingsPath);
-                return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                var s = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                s.Clamp();
+                return s;
             }
         }
         catch { }
         return new AppSettings();
+    }
+
+    private void Clamp()
+    {
+        CircleDiameter = Math.Clamp(CircleDiameter, 10, 400);
+        OpacityPercent = Math.Clamp(OpacityPercent, 10, 90);
+
+        // Validate hex colour — fall back to default if unreadable
+        try { ColorTranslator.FromHtml(ColorHex); }
+        catch { ColorHex = "#FFFF00"; }
     }
 
     public static void Save(AppSettings s)
@@ -62,7 +74,11 @@ public class AppSettings
         using var key = Registry.CurrentUser.OpenSubKey(RunRegKey, writable: true);
         if (key == null) return;
         if (enable)
-            key.SetValue(AppRegName, Environment.ProcessPath ?? string.Empty);
+        {
+            var path = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(path)) return;
+            key.SetValue(AppRegName, path);
+        }
         else
             key.DeleteValue(AppRegName, throwOnMissingValue: false);
     }

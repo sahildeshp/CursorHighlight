@@ -94,6 +94,9 @@ public class TrayApplicationContext : ApplicationContext
         Application.Exit();
     }
 
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
     private static Icon CreateTrayIcon()
     {
         using var bmp = new Bitmap(16, 16);
@@ -105,7 +108,11 @@ public class TrayApplicationContext : ApplicationContext
             using var pen = new System.Drawing.Pen(Color.FromArgb(180, 200, 200, 0), 1f);
             g.DrawEllipse(pen, 1, 1, 13, 13);
         }
-        return Icon.FromHandle(bmp.GetHicon());
+        // GetHicon() creates a GDI HICON; copy it into a managed Icon then free the handle
+        IntPtr hIcon = bmp.GetHicon();
+        var icon = (Icon)Icon.FromHandle(hIcon).Clone();
+        DestroyIcon(hIcon);
+        return icon;
     }
 
     protected override void Dispose(bool disposing)
